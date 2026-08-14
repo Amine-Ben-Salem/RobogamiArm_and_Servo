@@ -10,6 +10,13 @@ from Control_ROBOGAMI import serial_robogami
 SERIAL_COM = True
 baud_rate = 115200
 
+# ROBOGAMI CONTROL PARAMETERS
+desired_angle = 70  # degrees
+joint_angles_desired = np.array([np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle), 
+                                 np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle)])
+gripper_velocity_desired = 0  # positive (e.g. +20) for opening, negative (e.g. -20) for closing, 0 for no movement
+
+
 # -------------BLUETOOTH CONNECTION----------
 if SERIAL_COM:
 
@@ -50,9 +57,9 @@ if SERIAL_COM:
             print(msg)
             print("The setup() function failed. Please check the Arduino code and try again.")
             exit()
-        if "Base" in msg:
+        if msg == "<READY: Base initialized>":
             seen_base = True
-        elif "Robogami" in msg:
+        elif msg == "<READY: Robogami initialized>":
             seen_robogami = True
         else:
             print(msg)
@@ -65,35 +72,43 @@ def update():
     # Serial com
     if SERIAL_COM:
         try:
+            # RESET THE STATES EACH UPDATE
+            seen_base = False
+            seen_robogami = False
             # Ask for Read current position or set goal position
             cmd = input("Do you want to control the Base or the Robogami? Type ""B"" for Base, ""R"" for Robogami: ")
             if cmd == "B":
                 ser.write(b"BASE\n")
-                seen_base = False
                 while not seen_base:
                     msg = ser.readline().decode().strip()
                     if not msg:
                         continue
-                    if msg == "Entering Base control mode...":
+                    print(msg)
+                    if "Entering Base control mode..." in msg:
                         seen_base = True
-                serial_base(ser)
             elif cmd == "R":
                 ser.write(b"ROBOGAMI\n")
-                seen_robogami = False
                 while not seen_robogami:
                     msg = ser.readline().decode().strip()
                     if not msg:
                         continue
-                    if msg == "Entering Robogami control mode...":
+                    print(msg)
+                    if "Entering Robogami control mode..." in msg:
                         seen_robogami = True
-                serial_robogami(ser)
             else:
                 print("Invalid command. Please type 'B' for Base or 'R' for Robogami.")
 
+            if seen_base:
+                serial_base(ser)
+            elif seen_robogami:
+                serial_robogami(ser,joint_angles_desired, gripper_velocity_desired)
+            else:
+                # THIS SHOULD NOT HAPPEN, BUT JUST IN CASE
+                print("Neither Base nor Robogami control mode was entered. Please check the Arduino code and try again.")
+                exit()
         except Exception as e:
             print("Error serial:", e)
             exit()
-
 
 if __name__ == '__main__':
     while True:

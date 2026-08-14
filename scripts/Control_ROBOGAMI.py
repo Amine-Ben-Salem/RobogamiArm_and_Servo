@@ -64,7 +64,7 @@ def send_command(ser,joint_angles_desired=None, gripper_velocity=0):
     return joint_angles_current, gripper_velocity_current, gripper_load_current
 
 
-def serial_robogami(ser,joint_angles_desired=None, gripper_velocity_desired=0,desired_angle=70):
+def serial_robogami(ser,joint_angles_desired=None, gripper_velocity_desired=0):
     ser.reset_input_buffer()
     ser.reset_output_buffer()
 
@@ -78,8 +78,8 @@ def serial_robogami(ser,joint_angles_desired=None, gripper_velocity_desired=0,de
     # start while True: loop runs infinitely
     # 1. get the emg signal and get the joint angles 
     # 2. send command with the joint angles
-    joint_angles_desired = np.array([np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle), 
-                                     np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle)])
+    # joint_angles_desired = np.array([np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle), 
+    #                                  np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle)])
     gripper_velocity_desired = 0  # positive (e.g. +20) for opening, negative (e.g. -20) for closing, 0 for no movement
 
     joint_angles_robot, gripper_velocity_robot, gripper_load_robot = send_command(ser,joint_angles_desired, gripper_velocity_desired)
