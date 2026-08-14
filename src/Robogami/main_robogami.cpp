@@ -7,13 +7,11 @@ BLA::Matrix<3> ee_velocities = {0.0, 0.0, 0.0};
 BLA::Matrix<6> joint_angles_desired = {min_position, min_position, min_position, min_position, min_position, min_position};
 
 // --- DEFINE SERIAL VARIABLES --
-double data_0, data_1, data_2, data_3, data_4, data_5;
+static double data_0, data_1, data_2, data_3, data_4, data_5;
 
-String inputString = "";         // a String to hold incoming data
-bool stringComplete = false;  // whether the string is complete
+static String inputString = "";         // a String to hold incoming data
+static bool stringComplete = false;  // whether the string is complete
 
-//LED for feedback
-const int ledPin = 13; //As a visualizer on Arduino due.
 
 
 void printDxlPingCheck() {
@@ -26,51 +24,7 @@ void printDxlPingCheck() {
   }
 }
 
-void setup() {
-  bool py_script_running= false;
-
-  //LED
-  pinMode(ledPin, OUTPUT);
-  bool ledState = false;
-
-  //ARDUINO AND DYNAMIXEL SERIAL COMMUNICATION
-  Serial.begin(115200);
-
-  //BLUETOOTH HC-06 AND ARDUINO SERIAL COMMUNICATION
-  DEBUG_SERIAL.begin(115200); //DEBUG_SERIAL = Serial1
-
-  // // --- INIT SERIAL COMMUNICATION TO ESP BLE MODULE ---
-  // DEBUG_SERIAL.begin(115200);
-  // DEBUG_SERIAL.flush();
-
-  // This while basically waits for the py script to get started
-  while (!py_script_running)
-  {
-      ledState = !ledState;
-      digitalWrite(ledPin, ledState);
-      if (Serial1.available())
-      {
-          String msg = Serial1.readStringUntil('\n');
-          msg.trim();
-
-          if (msg == "START")
-          {
-              Serial1.println("Finishing the arduino setup...");
-              py_script_running = true;
-          }
-          else
-          {
-              Serial1.println("<Unexpected:" + msg + ">");
-          }
-      }
-      delay(500);
-  }
-
-  // --- INIT DYNAMIXEL ---
-  dxl.begin(115200);
-  // Set Port Protocol Version. This has to match with DYNAMIXEL protocol version.
-  dxl.setPortProtocolVersion(DXL_PROTOCOL_VERSION);
-
+void init_robogami() {
   // Turn off torque when configuring items in EEPROM area
   for(int i = 0; i < DXL_ID_CNT; i++) {
     dxl.torqueOff(DXL_ID[i]);
@@ -170,18 +124,17 @@ void setup() {
 
   startTime = (float)millis(); // [ms]
 
-  Serial1.println("Dynamixels initialized safely");
-  Serial1.println("<READY>");
+  Serial1.println("Robogami initialized safely");
+  Serial1.println("<READY: Robogami initialized>");
 
   // Print this only after setup has completed, so the USB serial monitor has
   // time to reconnect after an upload and the result is not missed.
   //delay(5000);
   //printDxlPingCheck();
   //delay(5000);
-
 }
 
-void loop() {
+void loop_robogami() {
   // --- POSITION CONTROL LOOP ---
   if(Timer_01.Tick()){
     currentTime = (float)millis() - startTime; // [ms]

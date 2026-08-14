@@ -1,24 +1,31 @@
+#ifndef MAIN_BASE_H
+#define MAIN_BASE_H
 #include <DynamixelShield.h>
 //#include "Timing.cpp"
 
 //-----DYNAMIXEL--------
 
+#ifndef DXL_SHIELD
+#define DXL_SHIELD
 DynamixelShield dxl;
+#endif
 
 using namespace ControlTableItem;   // Enables GOAL_POSITION, PRESENT_POSITION, etc...
 
-const uint8_t DXL_ID = 41; //   
-const float DXL_PROTOCOL_VERSION = 2.0;
+const uint8_t DXL_ID_base = 41; //   
+// const float DXL_PROTOCOL_VERSION_base = 2.0;
 
 // 180° Rotation range
-double min_position_deg = 0;
-double max_position_deg = 180;
+double min_position_deg_base = 0;
+double max_position_deg_base = 180;
 
-int32_t min_position = 0;
-int32_t max_position = 4095;
+int32_t min_position_base = 0;
+int32_t max_position_base = 4095;
 
-//-----MESSAGE EXTRACTOR------
+// --------------
 
+#ifndef GETVALUE
+#define GETVALUE
 // https://stackoverflow.com/questions/9072320/split-string-into-string-array
 String getValue(String data, char separator, int index)
 {
@@ -35,35 +42,8 @@ String getValue(String data, char separator, int index)
   }
   return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
+#endif
 
-
-//--------NOT USING THIS NOW----------
-
-// float sinWaveGenerator(double offset, double amplitude, double period, double currentTime){
-//   return amplitude*sin(2*PI*currentTime/period) + offset;
-// }
-
-// String DataBLE = "";
-
-// Timing control
-// Timer Timer_01, Timer_02;
-
-// int postionContolLoop = 20, printLoop = 100; // [ms]
-// bool print = true;
-
-// //Initialize module class
-// //int max_motor_speed = 40, min_motor_speed = -40; // [0.024 rad/s] or [0.229 rotation/minute] // [raw]
-
-// // Initialize
-// float setpointAngle=min_position, setpointVelocity = 0; // for sinusoidal angle
-
-// // --- POSITON CONTROL ---
-// bool state = false;
-
-// float BaseServoAngle={min_position}; // 
-// float BaseServoVelocity={0}; 
-
-// float poseUnit = 0.001534355; // [rad/RAW_DATA]
-
-// float startTime, currentTime, previousTime;
-
+void init_base();
+void loop_base();
+#endif

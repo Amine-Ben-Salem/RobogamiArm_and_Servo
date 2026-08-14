@@ -1,3 +1,6 @@
+#ifndef KINEMATICS_H
+#define KINEMATICS_H
+
 #include <Arduino.h>
 #include <BasicLinearAlgebra.h>
 
@@ -194,3 +197,5 @@ void numericalJacobian(EEPose (*f)(float[3]), float theta[3], BLA::Matrix<3, 3> 
         jacobian(2, i) = (f_plus.pitch - f_minus.pitch) / (2 * delta);
     }
 }
+
+#endif

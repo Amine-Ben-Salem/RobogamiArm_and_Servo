@@ -1,3 +1,6 @@
+#ifndef MAIN_ROBOGAMI_H
+#define MAIN_ROBOGAMI_H
+
 #include <DynamixelShield.h>
 #include "origami_module.h"
 #include "Timing.cpp"
@@ -53,7 +56,10 @@ float startTime, currentTime, previousTime;
 
 const float DXL_PROTOCOL_VERSION = 2.0;
 
+#ifndef DXL_SHIELD
+#define DXL_SHIELD
 DynamixelShield dxl; // Serial 
+#endif
 
 //This namespace is required to use Control table item names
 using namespace ControlTableItem;
@@ -97,7 +103,8 @@ DYNAMIXEL::XELInfoSyncWrite_t info_xels_sw[DXL_ID_CNT_TOTAL];
 
 // --------------
 
-
+#ifndef GETVALUE
+#define GETVALUE
 // https://stackoverflow.com/questions/9072320/split-string-into-string-array
 String getValue(String data, char separator, int index)
 {
@@ -114,7 +121,14 @@ String getValue(String data, char separator, int index)
   }
   return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
+#endif
+
 
 float sinWaveGenerator(double offset, double amplitude, double period, double currentTime){
   return amplitude*sin(2*PI*currentTime/period) + offset;
 }
+
+void init_robogami();
+void loop_robogami();
+
+#endif

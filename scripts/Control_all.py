@@ -4,6 +4,8 @@ import serial
 import numpy as np
 from serial.tools import list_ports
 import time
+from Control_BASE import serial_base
+from Control_ROBOGAMI import serial_robogami
 
 SERIAL_COM = True
 baud_rate = 115200
@@ -35,9 +37,12 @@ if SERIAL_COM:
     ser.reset_input_buffer()
     ser.reset_output_buffer()
     print("Bluetooth serial port opened successfully")
+
     ser.write(b"START\n")
-    arduino_ready = False
-    while not arduino_ready:
+    seen_base = False
+    seen_robogami = False
+
+    while not (seen_base and seen_robogami):
         msg = ser.readline().decode().strip()
         if not msg:
             continue
@@ -45,66 +50,49 @@ if SERIAL_COM:
             print(msg)
             print("The setup() function failed. Please check the Arduino code and try again.")
             exit()
-        elif msg == "<READY>":
-            arduino_ready = True
-            print("Setup successfully completed !")
+        if "Base" in msg:
+            seen_base = True
+        elif "Robogami" in msg:
+            seen_robogami = True
         else:
             print(msg)
+    # the next print happens only if both base and robogami have been initialized successfully
+    print("Devices initialized successfully!")
 
 def update():
     ser.reset_input_buffer()
     ser.reset_output_buffer()
-    # ----SEND MESSAGE-----
+    # Serial com
     if SERIAL_COM:
         try:
             # Ask for Read current position or set goal position
-            cmd = input("To read position type ""R"", to set one type ""W"": ")
-            if cmd == "R":
-                cmd = "PresentPos"
-            elif cmd == "W":
-                cmd = input("Provide a goal position in deg: ")
-                cmd = "GoalPos " + cmd
-            # Format the message
-            command = cmd + '\n'
-
-            # Send message
-            ser.reset_output_buffer()
-            ser.write(command.encode())
+            cmd = input("Do you want to control the Base or the Robogami? Type ""B"" for Base, ""R"" for Robogami: ")
+            if cmd == "B":
+                ser.write(b"BASE\n")
+                seen_base = False
+                while not seen_base:
+                    msg = ser.readline().decode().strip()
+                    if not msg:
+                        continue
+                    if msg == "Entering Base control mode...":
+                        seen_base = True
+                serial_base(ser)
+            elif cmd == "R":
+                ser.write(b"ROBOGAMI\n")
+                seen_robogami = False
+                while not seen_robogami:
+                    msg = ser.readline().decode().strip()
+                    if not msg:
+                        continue
+                    if msg == "Entering Robogami control mode...":
+                        seen_robogami = True
+                serial_robogami(ser)
+            else:
+                print("Invalid command. Please type 'B' for Base or 'R' for Robogami.")
 
         except Exception as e:
             print("Error serial:", e)
-
-    # ----RECEIVE MESSAGE----
-    if SERIAL_COM:
-        #ser.reset_input_buffer()
-        message = ""
-        while True:
-            # Get data from TCP server
-            data = ser.readline()
-            data = data.decode("utf-8")
-
-            message = message + data
-
-            # Search for unique first element of message "<" (find returns -1 if element is not found)
-            position_first_element = message.find("<")
-
-            # Check if the unique first element is included in the data and cut everything before if so
-            if position_first_element == -1:
-                continue
-            else:
-                message = message[position_first_element:]
-
-            # Search for the unique last element of message ">"
-            position_last_element = message.find(">")
-
-            # Check if the unique last element is included in the data and cut everything after if so
-            if position_last_element == -1:
-                continue
-            else:
-                message = message[:position_last_element+1]
-                break
-
-        print(message)
+            exit()
 
 
 if __name__ == '__main__':
