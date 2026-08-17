@@ -69,9 +69,17 @@ void init_base(DynamixelShield &dxl, Stream &serial) {
 
 void loop_base(DynamixelShield &dxl, Stream &serial) {
   // Read one full line from Python
+
   while (!stringComplete) {
     inputString = serial.readStringUntil('\n');
     inputString.trim();
+    
+    if (inputString.endsWith("BASE") or inputString.endsWith("ROBOGAMI")) {
+        // Ignore mode switch commands
+        inputString = "";
+        stringComplete = false;
+        return;
+    }
 
     // Ignore anything that is not a completed command
     if (!inputString.endsWith("DONE")) {

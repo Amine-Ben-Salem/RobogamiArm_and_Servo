@@ -36,7 +36,7 @@ def send_command(ser,joint_angles_desired=None, gripper_velocity=0):
 
         message = message + data
         # uncomment this to debug the received message
-        print("Received message before parsing (control_robogami.py): ", message)
+        # print("Received message before parsing (control_robogami.py): ", message)
         
 
         # Search for unique first element of message "<" (find returns -1 if element is not found)
@@ -58,13 +58,13 @@ def send_command(ser,joint_angles_desired=None, gripper_velocity=0):
             message = message[:position_last_element+1]
 
             # uncomment this to debug the received message
-            print("Received message after parsing (control_robogami.py): ", message)
+            # print("Received message after parsing (control_robogami.py): ", message)
 
             # split the message by spaces to get individual elements
             elements = message.split()
             elements[0] = elements[0].replace("<", "")
             elements[-1] = elements[-1].replace(">", "")
-            print("Elements: ", elements)
+            # print("Elements: ", elements)
 
             # get the current joint angles from the message (every second element, after removing "<" and ">")
             joint_angles_current = np.array([float(elements[0]), float(elements[2]), float(elements[4]), float(elements[6]), float(elements[8]), float(elements[10])])

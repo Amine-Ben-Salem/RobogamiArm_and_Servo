@@ -234,6 +234,7 @@ void init_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
 }
 
 void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
+  
   // --- POSITION CONTROL LOOP ---
   if(Timer_01.Tick()){
     currentTime = (float)millis() - startTime; // [ms]
@@ -254,9 +255,18 @@ void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
     }
    
     // --- SERIAL COMMUNICATION - VELOCITY CONTROL ---
-    while (!stringComplete) {
+
+
+    while (!stringComplete && DEBUG_SERIAL.available()>0) {
       inputString = DEBUG_SERIAL.readStringUntil('\n');
       inputString.trim();
+
+      if (inputString.endsWith("BASE") or inputString.endsWith("ROBOGAMI")) {
+        // Ignore mode switch commands
+        inputString = "";
+        stringComplete = false;
+        return;
+      }
 
       // Ignore incomplete lines
       if (!inputString.endsWith("DONErobo")) {
@@ -272,32 +282,34 @@ void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
     // DEBUG_SERIAL.println(inputString);
 
     // Parse command string sent by Python script
-    data_0 = getValue(inputString, ' ', 0).toFloat();
-    data_1  = getValue(inputString, ' ', 1).toFloat();
-    data_2  = getValue(inputString, ' ', 2).toFloat();
-    data_3  = getValue(inputString, ' ', 3).toFloat();
-    data_4  = getValue(inputString, ' ', 4).toFloat();
-    data_5  = getValue(inputString, ' ', 5).toFloat();
+    if (stringComplete) {
+        // Split the input string by spaces and convert to float
+      data_0 = getValue(inputString, ' ', 0).toFloat();
+      data_1  = getValue(inputString, ' ', 1).toFloat();
+      data_2  = getValue(inputString, ' ', 2).toFloat();
+      data_3  = getValue(inputString, ' ', 3).toFloat();
+      data_4  = getValue(inputString, ' ', 4).toFloat();
+      data_5  = getValue(inputString, ' ', 5).toFloat();
 
-    // DEBUG_SERIAL.print("Parsed data: ");
-    // DEBUG_SERIAL.print(data_0); DEBUG_SERIAL.print(" ");
-    // DEBUG_SERIAL.print(data_1); DEBUG_SERIAL.print(" ");
-    // DEBUG_SERIAL.print(data_2); DEBUG_SERIAL.print(" ");
-    // DEBUG_SERIAL.print(data_3); DEBUG_SERIAL.print(" ");
-    // DEBUG_SERIAL.print(data_4); DEBUG_SERIAL.print(" ");
-    // DEBUG_SERIAL.println(data_5);
+      // DEBUG_SERIAL.print("Parsed data: ");
+      // DEBUG_SERIAL.print(data_0); DEBUG_SERIAL.print(" ");
+      // DEBUG_SERIAL.print(data_1); DEBUG_SERIAL.print(" ");
+      // DEBUG_SERIAL.print(data_2); DEBUG_SERIAL.print(" ");
+      // DEBUG_SERIAL.print(data_3); DEBUG_SERIAL.print(" ");
+      // DEBUG_SERIAL.print(data_4); DEBUG_SERIAL.print(" ");
+      // DEBUG_SERIAL.println(data_5);
 
-    // set joint angle positions
-    joint_angles_desired(0) = data_0; // module 1 - leg 1
-    joint_angles_desired(1) = data_1; // module 1 - leg 2
-    joint_angles_desired(2) = data_2; // module 1 - leg 3
-    joint_angles_desired(3) = data_3; // module 2 - leg 1
-    joint_angles_desired(4) = data_4; // module 2 - leg 2
-    joint_angles_desired(5) = data_5; // module 2 - leg 3
+      // set joint angle positions
+      joint_angles_desired(0) = data_0; // module 1 - leg 1
+      joint_angles_desired(1) = data_1; // module 1 - leg 2
+      joint_angles_desired(2) = data_2; // module 1 - leg 3
+      joint_angles_desired(3) = data_3; // module 2 - leg 1
+      joint_angles_desired(4) = data_4; // module 2 - leg 2
+      joint_angles_desired(5) = data_5; // module 2 - leg 3
 
-    inputString     = ""; //Reset string
-    stringComplete  = false;
-
+      inputString     = ""; //Reset string
+      stringComplete  = false;
+    }
     // --- COMPUTE POSITION CONTROLLER ---
     for(int i = 0; i < 3; i++) { // 3 is number of legs per module
       module1.setpointLegVelocityFF[i] = 0;

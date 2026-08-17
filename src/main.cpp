@@ -55,29 +55,30 @@ void setup() {
 }
 
 void loop() {
-    if (DEBUG_SERIAL.available() > 0) {
+    static int state = -1; // 0 = base / 1 = robogami
+    while (DEBUG_SERIAL.available() > 0) {
         String cmd = DEBUG_SERIAL.readStringUntil('\n');
-
-        static int state = -1; // 0 = base / 1 = robogami
-
         cmd.trim();
-
         if (cmd == "BASE") {
             DEBUG_SERIAL.println("Entering Base control mode...");
             state = 0;
         } else if (cmd == "ROBOGAMI") {
             DEBUG_SERIAL.println("Entering Robogami control mode...");
             state = 1;
+        } else {
+            break; // Ignore any other commands
         }
-        switch (state) {
-            case 0:
-                loop_base(dxl, DEBUG_SERIAL);
-                break;
-            case 1:
-                loop_robogami(dxl, DEBUG_SERIAL);
-                break;
-            default:
-                DEBUG_SERIAL.print("<Waiting for command: 'BASE' or 'ROBOGAMI'>");
-        }
+    }
+    switch (state) 
+    {
+    case 0:
+        loop_base(dxl, DEBUG_SERIAL);
+        break;
+    case 1:
+        loop_robogami(dxl, DEBUG_SERIAL);
+        break;
+    default:
+        //DEBUG_SERIAL.print("<Waiting for command: 'BASE' or 'ROBOGAMI'>");
+        break;
     }
 }
