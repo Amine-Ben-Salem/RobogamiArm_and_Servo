@@ -254,30 +254,49 @@ void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
     }
    
     // --- SERIAL COMMUNICATION - VELOCITY CONTROL ---
-    while (DEBUG_SERIAL.available()>0) {
+    while (!stringComplete) {
       inputString = DEBUG_SERIAL.readStringUntil('\n');
+      inputString.trim();
+
+      // Ignore incomplete lines
+      if (!inputString.endsWith("DONErobo")) {
+        continue;
+      }
+
+      // Remove the DONErobo suffix before parsing
+      inputString.remove(inputString.length() - 8);
       stringComplete = true;
     }
+    
+    // DEBUG_SERIAL.print("inputString (main_robogami.cpp): ");
+    // DEBUG_SERIAL.println(inputString);
 
-    if(stringComplete){
-            data_0 = getValue(inputString, ' ', 0).toFloat();
-            data_1  = getValue(inputString, ' ', 1).toFloat();
-            data_2  = getValue(inputString, ' ', 2).toFloat();
-            data_3  = getValue(inputString, ' ', 3).toFloat();
-            data_4  = getValue(inputString, ' ', 4).toFloat();
-            data_5  = getValue(inputString, ' ', 5).toFloat();
+    // Parse command string sent by Python script
+    data_0 = getValue(inputString, ' ', 0).toFloat();
+    data_1  = getValue(inputString, ' ', 1).toFloat();
+    data_2  = getValue(inputString, ' ', 2).toFloat();
+    data_3  = getValue(inputString, ' ', 3).toFloat();
+    data_4  = getValue(inputString, ' ', 4).toFloat();
+    data_5  = getValue(inputString, ' ', 5).toFloat();
 
-            // set joint angle positions
-            joint_angles_desired(0) = data_0; // module 1 - leg 1
-            joint_angles_desired(1) = data_1; // module 1 - leg 2
-            joint_angles_desired(2) = data_2; // module 1 - leg 3
-            joint_angles_desired(3) = data_3; // module 2 - leg 1
-            joint_angles_desired(4) = data_4; // module 2 - leg 2
-            joint_angles_desired(5) = data_5; // module 2 - leg 3
+    // DEBUG_SERIAL.print("Parsed data: ");
+    // DEBUG_SERIAL.print(data_0); DEBUG_SERIAL.print(" ");
+    // DEBUG_SERIAL.print(data_1); DEBUG_SERIAL.print(" ");
+    // DEBUG_SERIAL.print(data_2); DEBUG_SERIAL.print(" ");
+    // DEBUG_SERIAL.print(data_3); DEBUG_SERIAL.print(" ");
+    // DEBUG_SERIAL.print(data_4); DEBUG_SERIAL.print(" ");
+    // DEBUG_SERIAL.println(data_5);
 
-            inputString     = ""; //Reset string
-            stringComplete  = false;
-    }
+    // set joint angle positions
+    joint_angles_desired(0) = data_0; // module 1 - leg 1
+    joint_angles_desired(1) = data_1; // module 1 - leg 2
+    joint_angles_desired(2) = data_2; // module 1 - leg 3
+    joint_angles_desired(3) = data_3; // module 2 - leg 1
+    joint_angles_desired(4) = data_4; // module 2 - leg 2
+    joint_angles_desired(5) = data_5; // module 2 - leg 3
+
+    inputString     = ""; //Reset string
+    stringComplete  = false;
 
     // --- COMPUTE POSITION CONTROLLER ---
     for(int i = 0; i < 3; i++) { // 3 is number of legs per module

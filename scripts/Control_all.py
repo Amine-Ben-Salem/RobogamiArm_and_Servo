@@ -97,7 +97,8 @@ def update():
                         seen_robogami = True
             else:
                 print("Invalid command. Please type 'B' for Base or 'R' for Robogami.")
-
+                return
+            
             if seen_base:
                 serial_base(ser)
             elif seen_robogami:
