@@ -55,35 +55,8 @@ void init_base(DynamixelShield &dxl, Stream &serial) {
 void loop_base(DynamixelShield &dxl, Stream &serial) {
   // Read one full line from Python
 
-  while (serial.available()>0) {
-    inputString = serial.readStringUntil('\n');
-    inputString.trim();
-    // serial.print("In while loop_base(), inputString: ");
-    // serial.println(inputString);
-  }
-
-  if (inputString.endsWith("ROBOGAMI")) {
-    state = STATE_ROBOGAMI;
-    stringComplete = false;
-    inputString = "";
-    serial.println("Entering Robogami control mode...");
-    return;
-  } else if (inputString.endsWith("BASE")) {
-    state = STATE_BASE;
-    stringComplete = false;
-    inputString = "";
-    serial.println("Entering Base control mode...");
-    return;
-  } else if (inputString.endsWith("DONEbase")) {
-    // Remove the DONE suffix before parsing
-    inputString.remove(inputString.length() - 8);
-    stringComplete = true;
-  }
-
-  if (!stringComplete && inputString != "") {
-    serial.print("Unknown message (main_base.cpp): ");
-    serial.println(inputString);
-  }
+  handleSerialBlock(serial, inputString, stringComplete, 
+                    "DONEbase", "main_base.cpp");
 
   if (stringComplete) {
     //----------- EXTRACT MESSAGE ------------

@@ -38,6 +38,47 @@ String getValue(String data, char separator, int index)
   return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
+// handleSerialBlock
+void handleSerialBlock(Stream &serial,
+                       String &inputString,
+                       bool &stringComplete,
+                       const char *doneSuffix,
+                       const char *unknownSource)
+{
+  while (serial.available() > 0) {
+    inputString = serial.readStringUntil('\n');
+    inputString.trim();
+  }
+
+  if (inputString.endsWith("BASE")) {
+    state = STATE_BASE;
+    stringComplete = false;
+    inputString = "";
+    serial.println("Entering Base control mode...");
+    return;
+  }
+
+  if (inputString.endsWith("ROBOGAMI")) {
+    state = STATE_ROBOGAMI;
+    stringComplete = false;
+    inputString = "";
+    serial.println("Entering Robogami control mode...");
+    return;
+  }
+
+  if (inputString.endsWith(doneSuffix)) {
+    inputString.remove(inputString.length() - strlen(doneSuffix));
+    stringComplete = true;
+  }
+
+  if (!stringComplete && inputString != "") {
+    serial.print("Unknown message (");
+    serial.print(unknownSource);
+    serial.print("): ");
+    serial.println(inputString);
+  }
+}
+
 //LED 
 const int ledPin = 13; //As a visualizer on Arduino due.
 
@@ -97,7 +138,8 @@ void loop() {
         loop_robogami(dxl, DEBUG_SERIAL);
         break;
     default:
-        if (DEBUG_SERIAL.available() > 0) {
+    // If no state is set, check for commands to switch states  
+        while (DEBUG_SERIAL.available() > 0) {
             String cmd = DEBUG_SERIAL.readStringUntil('\n');
             if (cmd == "BASE") {
                 DEBUG_SERIAL.println("Entering Base control mode...");
@@ -109,7 +151,4 @@ void loop() {
         }
         break;
     }
-
-    
-    
 }

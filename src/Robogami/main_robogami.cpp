@@ -218,6 +218,11 @@ void init_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
 
 void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
   
+  // --- SERIAL COMMUNICATION ---
+
+  handleSerialBlock(DEBUG_SERIAL, inputString, stringComplete, 
+                    "DONErobo", "main_robogami.cpp");
+
   // --- POSITION CONTROL LOOP ---
   if(Timer_01.Tick()){
     currentTime = (float)millis() - startTime; // [ms]
@@ -236,38 +241,6 @@ void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
       DEBUG_SERIAL.print(" expected=");
       DEBUG_SERIAL.println(DXL_ID_CNT_TOTAL);
     }
-   
-    // --- SERIAL COMMUNICATION - VELOCITY CONTROL ---
-
-    while (DEBUG_SERIAL.available()>0) {
-      inputString = DEBUG_SERIAL.readStringUntil('\n');
-      inputString.trim();
-    }
-    
-    if (inputString.endsWith("BASE")) {
-      state = STATE_BASE;
-      stringComplete = false;
-      inputString = "";
-      DEBUG_SERIAL.println("Entering Base control mode...");
-      return;
-    } else if (inputString.endsWith("ROBOGAMI")) {
-      state = STATE_ROBOGAMI;
-      stringComplete = false;
-      inputString = "";
-      DEBUG_SERIAL.println("Entering Robogami control mode...");
-      return;
-    } else if (inputString.endsWith("DONErobo")) {
-      // Remove the DONE suffix before parsing
-      inputString.remove(inputString.length() - 8);
-      stringComplete = true;
-    }
-    if (!stringComplete && inputString != "") {
-      DEBUG_SERIAL.print("Unknown message (main_robogami.cpp): ");
-      DEBUG_SERIAL.println(inputString);
-    }
-    
-    // DEBUG_SERIAL.print("inputString (main_robogami.cpp): ");
-    // DEBUG_SERIAL.println(inputString);
 
     // Parse command string sent by Python script
     if (stringComplete) {

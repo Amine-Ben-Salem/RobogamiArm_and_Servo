@@ -12,5 +12,13 @@ typedef enum {
 } State;
 
 extern State state;
+
+// Shared helper for both device loops
+// main.h
+void handleSerialBlock(Stream &serial,
+                       String &inputString,
+                       bool &stringComplete,
+                       const char *doneSuffix,
+                       const char *unknownSource);
 #endif
 #endif
