@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "main_base.h"
+#include "../main.h"
 
 
 // ---------- FCT DECLARATIONS ----------
@@ -18,22 +19,6 @@ int32_t max_position_base = 4095;
 
 // --------------
 
-// https://stackoverflow.com/questions/9072320/split-string-into-string-array
-String getValue_base(String data, char separator, int index)
-{
-  int found = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex = data.length()-1;
-
-  for(int i=0; i<=maxIndex && found<=index; i++){
-    if(data.charAt(i)==separator || i==maxIndex){
-        found++;
-        strIndex[0] = strIndex[1]+1;
-        strIndex[1] = (i == maxIndex) ? i+1 : i;
-    }
-  }
-  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
-}
 
 // ---------- INIT ----------
 
@@ -70,48 +55,57 @@ void init_base(DynamixelShield &dxl, Stream &serial) {
 void loop_base(DynamixelShield &dxl, Stream &serial) {
   // Read one full line from Python
 
-  while (!stringComplete) {
+  while (serial.available()>0) {
     inputString = serial.readStringUntil('\n');
     inputString.trim();
-    
-    if (inputString.endsWith("BASE") or inputString.endsWith("ROBOGAMI")) {
-        // Ignore mode switch commands
-        inputString = "";
-        stringComplete = false;
-        return;
-    }
+    // serial.print("In while loop_base(), inputString: ");
+    // serial.println(inputString);
+  }
 
-    // Ignore anything that is not a completed command
-    if (!inputString.endsWith("DONE")) {
-      continue;
-    }
-
+  if (inputString.endsWith("ROBOGAMI")) {
+    state = STATE_ROBOGAMI;
+    stringComplete = false;
+    inputString = "";
+    serial.println("Entering Robogami control mode...");
+    return;
+  } else if (inputString.endsWith("BASE")) {
+    state = STATE_BASE;
+    stringComplete = false;
+    inputString = "";
+    serial.println("Entering Base control mode...");
+    return;
+  } else if (inputString.endsWith("DONEbase")) {
     // Remove the DONE suffix before parsing
-    inputString.remove(inputString.length() - 4);
-
+    inputString.remove(inputString.length() - 8);
     stringComplete = true;
-    break;
   }
 
-  //----------- EXTRACT MESSAGE ------------
-  what_message = getValue_base(inputString, ' ', 0); //extract first string
-  serial.print('<');
-
-  if (what_message == "GoalPos") {
-    received_pos = getValue_base(inputString, ' ', 1).toFloat(); //extract value and convert to float
-    received_position=true;
-  }
-  else if (what_message == "PresentPos"){
-    Current_pos=true;
-  } else {
-      serial.print("Unknown command: ");
-      serial.print(inputString);
-      serial.println(">");
+  if (!stringComplete && inputString != "") {
+    serial.print("Unknown message (main_base.cpp): ");
+    serial.println(inputString);
   }
 
-  inputString     = ""; //Reset string
-  stringComplete  = false;
+  if (stringComplete) {
+    //----------- EXTRACT MESSAGE ------------
+    what_message = getValue(inputString, ' ', 0); //extract first string
+    serial.print('<');
 
+    if (what_message == "GoalPos") {
+      received_pos = getValue(inputString, ' ', 1).toFloat(); //extract value and convert to float
+      received_position=true;
+    }
+    else if (what_message == "PresentPos"){
+      Current_pos=true;
+    } else {
+        serial.print("Unknown command: ");
+        serial.print(inputString);
+        serial.println(">");
+    }
+
+    inputString     = ""; //Reset string
+    stringComplete  = false;
+  }
+  
   //----------EXECUTE COMMAND -FOR NOW, ONLY READ AND WRITE POSITION- -------
 
   //WRITE POSITION

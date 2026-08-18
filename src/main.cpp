@@ -4,6 +4,39 @@
 #include "main.h"
 
 // ---------- INIT ----------
+// Old code. Don't know what it does exactly, but doesn't matter for now.
+#if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_MEGA2560)
+  #include <SoftwareSerial.h>
+  SoftwareSerial soft_serial(7, 8); // DYNAMIXELShield UART RX/TX
+  #define DEBUG_SERIAL soft_serial
+#elif defined(ARDUINO_SAM_DUE) || defined(ARDUINO_SAM_ZERO)
+  #define DEBUG_SERIAL Serial1    // Hardware UART for the Bluetooth module
+#else
+  #define DEBUG_SERIAL Serial
+#endif
+
+DynamixelShield dxl; // Serial 
+const float DXL_PROTOCOL_VERSION = 2.0;
+
+// Shared state across modules
+State state = STATE_IDLE;
+
+// https://stackoverflow.com/questions/9072320/split-string-into-string-array
+String getValue(String data, char separator, int index)
+{
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length()-1;
+
+  for(int i=0; i<=maxIndex && found<=index; i++){
+    if(data.charAt(i)==separator || i==maxIndex){
+        found++;
+        strIndex[0] = strIndex[1]+1;
+        strIndex[1] = (i == maxIndex) ? i+1 : i;
+    }
+  }
+  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
 
 //LED 
 const int ledPin = 13; //As a visualizer on Arduino due.
@@ -55,30 +88,28 @@ void setup() {
 }
 
 void loop() {
-    static int state = -1; // 0 = base / 1 = robogami
-    while (DEBUG_SERIAL.available() > 0) {
-        String cmd = DEBUG_SERIAL.readStringUntil('\n');
-        cmd.trim();
-        if (cmd == "BASE") {
-            DEBUG_SERIAL.println("Entering Base control mode...");
-            state = 0;
-        } else if (cmd == "ROBOGAMI") {
-            DEBUG_SERIAL.println("Entering Robogami control mode...");
-            state = 1;
-        } else {
-            break; // Ignore any other commands
-        }
-    }
-    switch (state) 
+    switch (state)
     {
-    case 0:
+    case STATE_BASE:
         loop_base(dxl, DEBUG_SERIAL);
         break;
-    case 1:
+    case STATE_ROBOGAMI:
         loop_robogami(dxl, DEBUG_SERIAL);
         break;
     default:
-        //DEBUG_SERIAL.print("<Waiting for command: 'BASE' or 'ROBOGAMI'>");
+        if (DEBUG_SERIAL.available() > 0) {
+            String cmd = DEBUG_SERIAL.readStringUntil('\n');
+            if (cmd == "BASE") {
+                DEBUG_SERIAL.println("Entering Base control mode...");
+                state = STATE_BASE;
+            } else if (cmd == "ROBOGAMI") {
+                DEBUG_SERIAL.println("Entering Robogami control mode...");
+                state = STATE_ROBOGAMI;
+            }
+        }
         break;
     }
+
+    
+    
 }

@@ -11,7 +11,7 @@ SERIAL_COM = True
 baud_rate = 115200
 
 # ROBOGAMI CONTROL PARAMETERS
-desired_angle = 70  # degrees
+desired_angle = 20  # degrees
 joint_angles_desired = np.array([np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle), 
                                  np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle)])
 gripper_velocity_desired = 0  # positive (e.g. +20) for opening, negative (e.g. -20) for closing, 0 for no movement
@@ -69,12 +69,12 @@ if SERIAL_COM:
 def update():
     ser.reset_input_buffer()
     ser.reset_output_buffer()
+    seen_base = False
+    seen_robogami = False
     # Serial com
     if SERIAL_COM:
         try:
             # RESET THE STATES EACH UPDATE
-            seen_base = False
-            seen_robogami = False
             # Ask for Read current position or set goal position
             cmd = input("Do you want to control the Base or the Robogami? Type ""B"" for Base, ""R"" for Robogami: ")
             if cmd == "B":
@@ -83,8 +83,9 @@ def update():
                     msg = ser.readline().decode().strip()
                     if not msg:
                         continue
-                    print(msg)
+                    # print(msg)
                     if "Entering Base control mode..." in msg:
+                        print(msg)
                         seen_base = True
             elif cmd == "R":
                 ser.write(b"ROBOGAMI\n")
@@ -92,8 +93,9 @@ def update():
                     msg = ser.readline().decode().strip()
                     if not msg:
                         continue
-                    print(msg)
+                    # print(msg)
                     if "Entering Robogami control mode..." in msg:
+                        print(msg)
                         seen_robogami = True
             else:
                 print("Invalid command. Please type 'B' for Base or 'R' for Robogami.")

@@ -3,6 +3,7 @@
 #include "kinematics.h"
 #include "origami_module.h"
 #include "Timing.cpp"
+#include "../main.h"
 
 // Timing control
 Timer Timer_01, Timer_02;
@@ -24,7 +25,6 @@ float setpointAngle=min_position, setpointVelocity = 0; // for sinusoidal angle
 
 
 // --- POSITON CONTROL ---
-bool state = false;
 
 int robot_id = 1; // 1 or 2
 int n_modules = 2;
@@ -84,23 +84,6 @@ DYNAMIXEL::InfoSyncWriteInst_t sw_infos;
 DYNAMIXEL::XELInfoSyncWrite_t info_xels_sw[DXL_ID_CNT_TOTAL];
 
 // --------------
-
-// https://stackoverflow.com/questions/9072320/split-string-into-string-array
-String getValue(String data, char separator, int index)
-{
-  int found = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex = data.length()-1;
-
-  for(int i=0; i<=maxIndex && found<=index; i++){
-    if(data.charAt(i)==separator || i==maxIndex){
-        found++;
-        strIndex[0] = strIndex[1]+1;
-        strIndex[1] = (i == maxIndex) ? i+1 : i;
-    }
-  }
-  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
-}
 
 // --- DEFINE MODULE VARIABLES ---
 BLA::Matrix<3> ee_velocities = {0.0, 0.0, 0.0};
@@ -256,26 +239,31 @@ void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
    
     // --- SERIAL COMMUNICATION - VELOCITY CONTROL ---
 
-
-    while (!stringComplete && DEBUG_SERIAL.available()>0) {
+    while (DEBUG_SERIAL.available()>0) {
       inputString = DEBUG_SERIAL.readStringUntil('\n');
       inputString.trim();
-
-      if (inputString.endsWith("BASE") or inputString.endsWith("ROBOGAMI")) {
-        // Ignore mode switch commands
-        inputString = "";
-        stringComplete = false;
-        return;
-      }
-
-      // Ignore incomplete lines
-      if (!inputString.endsWith("DONErobo")) {
-        continue;
-      }
-
-      // Remove the DONErobo suffix before parsing
+    }
+    
+    if (inputString.endsWith("BASE")) {
+      state = STATE_BASE;
+      stringComplete = false;
+      inputString = "";
+      DEBUG_SERIAL.println("Entering Base control mode...");
+      return;
+    } else if (inputString.endsWith("ROBOGAMI")) {
+      state = STATE_ROBOGAMI;
+      stringComplete = false;
+      inputString = "";
+      DEBUG_SERIAL.println("Entering Robogami control mode...");
+      return;
+    } else if (inputString.endsWith("DONErobo")) {
+      // Remove the DONE suffix before parsing
       inputString.remove(inputString.length() - 8);
       stringComplete = true;
+    }
+    if (!stringComplete && inputString != "") {
+      DEBUG_SERIAL.print("Unknown message (main_robogami.cpp): ");
+      DEBUG_SERIAL.println(inputString);
     }
     
     // DEBUG_SERIAL.print("inputString (main_robogami.cpp): ");
@@ -307,8 +295,8 @@ void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
       joint_angles_desired(4) = data_4; // module 2 - leg 2
       joint_angles_desired(5) = data_5; // module 2 - leg 3
 
-      inputString     = ""; //Reset string
-      stringComplete  = false;
+      // inputString     = ""; //Reset string
+      // stringComplete  = false;
     }
     // --- COMPUTE POSITION CONTROLLER ---
     for(int i = 0; i < 3; i++) { // 3 is number of legs per module
@@ -371,16 +359,19 @@ void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
 
     // --- SERIAL OUTPUT ---
     if(Timer_02.Tick()){
-      if (print){
-          DEBUG_SERIAL.print("<");
-          DEBUG_SERIAL.print(module1.moduleLegAngle[0]); DEBUG_SERIAL.print(" x ");
-          DEBUG_SERIAL.print(module1.moduleLegAngle[1]); DEBUG_SERIAL.print(" x ");
-          DEBUG_SERIAL.print(module1.moduleLegAngle[2]); DEBUG_SERIAL.print(" x ");
-          DEBUG_SERIAL.print(module2.moduleLegAngle[0]); DEBUG_SERIAL.print(" x ");
-          DEBUG_SERIAL.print(module2.moduleLegAngle[1]); DEBUG_SERIAL.print(" x ");
-          DEBUG_SERIAL.print(module2.moduleLegAngle[2]); DEBUG_SERIAL.print(" x ");
-          DEBUG_SERIAL.print(0); DEBUG_SERIAL.print(" x ");
-          DEBUG_SERIAL.println("0>");
+      if (stringComplete){
+        DEBUG_SERIAL.print("<");
+        DEBUG_SERIAL.print(module1.moduleLegAngle[0]); DEBUG_SERIAL.print(" x ");
+        DEBUG_SERIAL.print(module1.moduleLegAngle[1]); DEBUG_SERIAL.print(" x ");
+        DEBUG_SERIAL.print(module1.moduleLegAngle[2]); DEBUG_SERIAL.print(" x ");
+        DEBUG_SERIAL.print(module2.moduleLegAngle[0]); DEBUG_SERIAL.print(" x ");
+        DEBUG_SERIAL.print(module2.moduleLegAngle[1]); DEBUG_SERIAL.print(" x ");
+        DEBUG_SERIAL.print(module2.moduleLegAngle[2]); DEBUG_SERIAL.print(" x ");
+        DEBUG_SERIAL.print(0); DEBUG_SERIAL.print(" x ");
+        DEBUG_SERIAL.println("0>");
+        // Print only once (maybe works ?)
+        inputString     = ""; //Reset string
+        stringComplete  = false;
     }
   }
 }

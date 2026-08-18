@@ -16,9 +16,9 @@ def serial_base(ser):
             cmd = input("Provide a goal position in deg: ")
             cmd = "GoalPos " + cmd
         # Format the message
-        command = cmd + 'DONE\n'
+        command = cmd + 'DONEbase\n'
 
-        #print("Sending command (serial_base): ", command)
+        # print("Sending command (serial_base): ", command)
 
         # Send message
         ser.reset_output_buffer()
@@ -37,7 +37,7 @@ def serial_base(ser):
 
         message = message + data
 
-        #print("Received message (serial_base): ", message)
+        # print("Received message (serial_base): ", message)
         
         # Search for unique first element of message "<" (find returns -1 if element is not found)
         position_first_element = message.find("<")
