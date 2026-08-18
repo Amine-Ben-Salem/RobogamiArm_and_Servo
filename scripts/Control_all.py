@@ -11,10 +11,10 @@ SERIAL_COM = True
 baud_rate = 115200
 
 # ROBOGAMI CONTROL PARAMETERS
-desired_angle = 20  # degrees
-joint_angles_desired = np.array([np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle), 
-                                 np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle)])
-gripper_velocity_desired = 0  # positive (e.g. +20) for opening, negative (e.g. -20) for closing, 0 for no movement
+# desired_angle = 20  # degrees
+# joint_angles_desired = np.array([np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle), 
+#                                  np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle)])
+# gripper_velocity_desired = 0  # positive (e.g. +20) for opening, negative (e.g. -20) for closing, 0 for no movement
 
 
 # -------------BLUETOOTH CONNECTION----------
@@ -104,7 +104,7 @@ def update():
             if seen_base:
                 serial_base(ser)
             elif seen_robogami:
-                serial_robogami(ser,joint_angles_desired, gripper_velocity_desired)
+                serial_robogami(ser)
             else:
                 # THIS SHOULD NOT HAPPEN, BUT JUST IN CASE
                 print("Neither Base nor Robogami control mode was entered. Please check the Arduino code and try again.")

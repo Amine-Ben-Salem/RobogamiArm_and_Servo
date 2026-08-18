@@ -77,7 +77,7 @@ def send_command(ser,joint_angles_desired=None, gripper_velocity=0):
     return joint_angles_current, gripper_velocity_current, gripper_load_current
 
 
-def serial_robogami(ser,joint_angles_desired=None, gripper_velocity_desired=0):
+def serial_robogami(ser):
     ser.reset_input_buffer()
     ser.reset_output_buffer()
 
@@ -93,6 +93,15 @@ def serial_robogami(ser,joint_angles_desired=None, gripper_velocity_desired=0):
     # 2. send command with the joint angles
     # joint_angles_desired = np.array([np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle), 
     #                                  np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle)])
+    
+    # Ask every time the function runs
+    desired_angle_deg = float(input("Provide desired angle in deg (10-70): "))
+
+    joint_angles_desired = np.deg2rad(
+        np.array([desired_angle_deg, desired_angle_deg, desired_angle_deg,
+                  desired_angle_deg, desired_angle_deg, desired_angle_deg])
+    )
+    
     gripper_velocity_desired = 0  # positive (e.g. +20) for opening, negative (e.g. -20) for closing, 0 for no movement
 
     t_start = time.time()
