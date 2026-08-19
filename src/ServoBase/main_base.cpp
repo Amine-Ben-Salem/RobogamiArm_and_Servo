@@ -29,7 +29,8 @@ static String what_message = "";
 static bool stringComplete = false;
 static bool received_position=false;
 static bool Current_pos=false;
-
+static const char *doneSuffix = "DONEbase";
+static const char *unknownSource = "main_base.cpp";
 
 //LED 
 static const int ledPin = 13; //As a visualizer on Arduino due.
@@ -55,8 +56,38 @@ void init_base(DynamixelShield &dxl, Stream &serial) {
 void loop_base(DynamixelShield &dxl, Stream &serial) {
   // Read one full line from Python
 
-  handleSerialBlock(serial, inputString, stringComplete, 
-                    "DONEbase", "main_base.cpp");
+  while (serial.available() > 0) {
+    inputString = serial.readStringUntil('\n');
+    inputString.trim();
+  }
+
+  if (inputString.endsWith("BASE")) {
+    state = STATE_BASE;
+    stringComplete = false;
+    inputString = "";
+    serial.println("Entering Base control mode...");
+    return;
+  }
+
+  if (inputString.endsWith("ROBOGAMI")) {
+    state = STATE_ROBOGAMI;
+    stringComplete = false;
+    inputString = "";
+    serial.println("Entering Robogami control mode...");
+    return;
+  }
+
+  if (inputString.endsWith(doneSuffix)) {
+    inputString.remove(inputString.length() - strlen(doneSuffix));
+    stringComplete = true;
+  }
+
+  if (!stringComplete && inputString != "") {
+    serial.print("Unknown message (");
+    serial.print(unknownSource);
+    serial.print("): ");
+    serial.println(inputString);
+  }
 
   if (stringComplete) {
     //----------- EXTRACT MESSAGE ------------

@@ -94,7 +94,8 @@ static double data_0, data_1, data_2, data_3, data_4, data_5 = min_position;
 
 static String inputString = "";         // a String to hold incoming data
 static bool stringComplete = false;  // whether the string is complete
-
+static const char *doneSuffix = "DONErobo";
+static const char *unknownSource = "main_robogami.cpp";
 
 
 void printDxlPingCheck(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
@@ -217,11 +218,40 @@ void init_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
 }
 
 void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
-  
   // --- SERIAL COMMUNICATION ---
 
-  handleSerialBlock(DEBUG_SERIAL, inputString, stringComplete, 
-                    "DONErobo", "main_robogami.cpp");
+  while (DEBUG_SERIAL.available() > 0) {
+    inputString = DEBUG_SERIAL.readStringUntil('\n');
+    inputString.trim();
+  }
+
+  if (inputString.endsWith("BASE")) {
+    state = STATE_BASE;
+    stringComplete = false;
+    inputString = "";
+    DEBUG_SERIAL.println("Entering Base control mode...");
+    return;
+  }
+
+  if (inputString.endsWith("ROBOGAMI")) {
+    state = STATE_ROBOGAMI;
+    stringComplete = false;
+    inputString = "";
+    DEBUG_SERIAL.println("Entering Robogami control mode...");
+    return;
+  }
+
+  if (inputString.endsWith(doneSuffix)) {
+    inputString.remove(inputString.length() - strlen(doneSuffix));
+    stringComplete = true;
+  }
+
+  if (!stringComplete && inputString != "") {
+    DEBUG_SERIAL.print("Unknown message (");
+    DEBUG_SERIAL.print(unknownSource);
+    DEBUG_SERIAL.print("): ");
+    DEBUG_SERIAL.println(inputString);
+  }
 
   // --- POSITION CONTROL LOOP ---
   if(Timer_01.Tick()){
