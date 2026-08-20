@@ -9,12 +9,14 @@ def serial_base(ser):
     # ----SEND MESSAGE-----
     try:
         # Ask for Read current position or set goal position
-        cmd = input("To read position type ""R"", to set one type ""W"": ")
+        cmd = input("To read position type ""R"", to set one type ""W"", to reset type ""RE"": ")
         if cmd == "R":
             cmd = "PresentPos"
         elif cmd == "W":
             cmd = input("Provide a goal position in deg: ")
             cmd = "GoalPos " + cmd
+        elif cmd == "RE":
+            cmd = "RESET"
         # Format the message
         command = cmd + 'DONEbase\n'
 
@@ -36,6 +38,8 @@ def serial_base(ser):
         data = data.decode("utf-8")
 
         message = message + data
+        if "Base initialized" in message:
+            break
 
         # print("Received message (serial_base): ", message)
         
@@ -57,5 +61,4 @@ def serial_base(ser):
         else:
             message = message[:position_last_element+1]
             break
-
-    print(message)
+    print(message[1:-1]+ "\n")  # Print the message without the angle brackets

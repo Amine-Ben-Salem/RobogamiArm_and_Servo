@@ -50,7 +50,7 @@ void init_base(DynamixelShield &dxl, Stream &serial) {
 
   serial.println("Setting base initial position...");
   dxl.setGoalPosition(DXL_ID_base, 205, UNIT_DEGREE);
-  serial.println("<READY: Base initialized>");
+  serial.println("Base initialized");
 }
 
 void loop_base(DynamixelShield &dxl, Stream &serial) {
@@ -100,6 +100,8 @@ void loop_base(DynamixelShield &dxl, Stream &serial) {
     }
     else if (what_message == "PresentPos"){
       Current_pos=true;
+    } else if (what_message == "RESET"){
+      init_base(dxl, serial);
     } else {
         serial.print("Unknown command: ");
         serial.print(inputString);

@@ -95,7 +95,50 @@ def serial_robogami(ser):
     #                                  np.deg2rad(desired_angle), np.deg2rad(desired_angle), np.deg2rad(desired_angle)])
     
     # Ask every time the function runs
-    desired_angle_deg = float(input("Provide desired angle in deg (10-70): "))
+    while True:
+        user_input = input('Provide a desired angle in deg (10-70), or type "RE" to reset: ').strip()
+
+        if user_input.upper() == "RE":
+            command = "RESETrobo\n"
+            ser.reset_output_buffer()
+            ser.write(command.encode())
+
+            message = ""
+            while True:
+                data = ser.readline().decode("utf-8")
+                if not data:
+                    continue
+                message += data
+                if "Robogami initialized" in message or "<READY: Robogami initialized>" in message:
+                    print("Robogami reset ongoing!")
+                    loading_message()
+                    return
+
+        try:
+            desired_angle_deg = float(user_input)
+
+            if desired_angle_deg < 10:
+                print("Value too low, instead setting angle to 10.")
+                desired_angle_deg = 10
+            elif desired_angle_deg > 70:
+                print("Value too high, instead setting angle to 70.")
+                desired_angle_deg = 70
+
+            break
+        except ValueError:
+            print('Invalid input. Type "RE" to reset or enter a numeric angle.')
+   
+    joint_angles_desired = np.deg2rad(
+        np.array([desired_angle_deg, desired_angle_deg, desired_angle_deg,
+                desired_angle_deg, desired_angle_deg, desired_angle_deg])
+    )
+
+    gripper_velocity_desired = 0
+    t_start = time.time()
+    joint_angles_robot, gripper_velocity_robot, gripper_load_robot = send_command(
+        ser, joint_angles_desired, gripper_velocity_desired
+    )
+
 
     joint_angles_desired = np.deg2rad(
         np.array([desired_angle_deg, desired_angle_deg, desired_angle_deg,
@@ -106,11 +149,28 @@ def serial_robogami(ser):
 
     t_start = time.time()
     joint_angles_robot, gripper_velocity_robot, gripper_load_robot = send_command(ser,joint_angles_desired, gripper_velocity_desired)
+    
+
     print("Desired Joint Angles: ", joint_angles_desired)
     print("Current Joint Angles: ", joint_angles_robot)
     print("Desired Gripper Velocities: ", gripper_velocity_desired)
     print("Current Gripper Velocity: ", gripper_velocity_robot)
     print("Current Gripper Load: ", gripper_load_robot)
-    print("Loop time: ", time.time() - t_start)
 
-    
+    loading_message()
+    # print("Loop time: ", time.time() - t_start)
+
+def loading_message():
+    duration = 5.0          # seconds
+    steps = 50              # update frequency / smoothness
+    bar_width = 30          # characters
+
+    for i in range(steps + 1):
+        progress = i / steps
+        percent = int(progress * 100)
+        filled = int(bar_width * progress)
+        bar = "#" * filled + "-" * (bar_width - filled)
+
+        print(f"\rLoading [{bar}] {percent:3d}%", end="", flush=True)
+        time.sleep(duration / steps)
+    print("\nRobogami ready!\n")

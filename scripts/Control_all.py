@@ -57,9 +57,9 @@ if SERIAL_COM:
             print(msg)
             print("The setup() function failed. Please check the Arduino code and try again.")
             exit()
-        if msg == "<READY: Base initialized>":
+        if "Base initialized" in msg:
             seen_base = True
-        elif msg == "<READY: Robogami initialized>":
+        elif "Robogami initialized" in msg:
             seen_robogami = True
         else:
             print(msg)
@@ -105,20 +105,7 @@ def update():
                 serial_base(ser)
             elif seen_robogami:
                 serial_robogami(ser)
-                duration = 5.0          # seconds
-                steps = 50              # update frequency / smoothness
-                bar_width = 30          # characters
-
-                for i in range(steps + 1):
-                    progress = i / steps
-                    percent = int(progress * 100)
-                    filled = int(bar_width * progress)
-                    bar = "#" * filled + "-" * (bar_width - filled)
-
-                    print(f"\rRobogami loading [{bar}] {percent:3d}%", end="", flush=True)
-                    time.sleep(duration / steps)
-
-                print("\nRobogami ready!")
+                
             else:
                 # THIS SHOULD NOT HAPPEN, BUT JUST IN CASE
                 print("Neither Base nor Robogami control mode was entered. Please check the Arduino code and try again.")

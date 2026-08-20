@@ -215,6 +215,7 @@ void init_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
   //delay(5000);
   //printDxlPingCheck(dxl, DEBUG_SERIAL);
   //delay(5000);
+  
 }
 
 void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
@@ -239,6 +240,15 @@ void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
     inputString = "";
     DEBUG_SERIAL.println("Entering Robogami control mode...");
     return;
+  }
+
+  if (inputString.endsWith("RESETrobo")) {
+    state = STATE_ROBOGAMI;
+    stringComplete = false;
+    inputString = "";
+    DEBUG_SERIAL.println("Resetting Robogami...");
+    init_robogami(dxl, DEBUG_SERIAL);
+    joint_angles_desired = {min_position, min_position, min_position, min_position, min_position, min_position};
   }
 
   if (inputString.endsWith(doneSuffix)) {
@@ -283,18 +293,18 @@ void loop_robogami(DynamixelShield &dxl, Stream &DEBUG_SERIAL) {
       data_5  = getValue(inputString, ' ', 5).toFloat();
 
       // Clamps the values for security reasons
-      if (data_0 < min_position) data_0 = min_position;
-      else if (data_0 > max_position) data_0 = max_position;
-      if (data_1 < min_position) data_1 = min_position;
-      else if (data_1 > max_position) data_1 = max_position;
-      if (data_2 < min_position) data_2 = min_position;
-      else if (data_2 > max_position) data_2 = max_position;
-      if (data_3 < min_position) data_3 = min_position;
-      else if (data_3 > max_position) data_3 = max_position;
-      if (data_4 < min_position) data_4 = min_position;
-      else if (data_4 > max_position) data_4 = max_position;
-      if (data_5 < min_position) data_5 = min_position;
-      else if (data_5 > max_position) data_5 = max_position;
+      if (data_0 <= min_position) data_0 = min_position;
+      else if (data_0 >= max_position) data_0 = max_position;
+      if (data_1 <= min_position) data_1 = min_position;
+      else if (data_1 >= max_position) data_1 = max_position;
+      if (data_2 <= min_position) data_2 = min_position;
+      else if (data_2 >= max_position) data_2 = max_position;
+      if (data_3 <= min_position) data_3 = min_position;
+      else if (data_3 >= max_position) data_3 = max_position;
+      if (data_4 <= min_position) data_4 = min_position;
+      else if (data_4 >= max_position) data_4 = max_position;
+      if (data_5 <= min_position) data_5 = min_position;
+      else if (data_5 >= max_position) data_5 = max_position;
 
       // set joint angle positions
       joint_angles_desired(0) = data_0; // module 1 - leg 1
