@@ -13,7 +13,7 @@ def serial_base(ser):
         if cmd == "R":
             cmd = "PresentPos"
         elif cmd == "W":
-            cmd = input("Provide a goal position in deg: ")
+            cmd = input("Provide a goal position in deg (0-165): ")
             cmd = "GoalPos " + cmd
         elif cmd == "RE":
             cmd = "RESET"

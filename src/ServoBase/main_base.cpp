@@ -11,8 +11,9 @@ const uint8_t DXL_ID_base = 41; //
 // const float DXL_PROTOCOL_VERSION_base = 2.0;
 
 // 180° Rotation range
+double offset_position_deg_base = 250; // [deg] - this value depends on how the base was mounted onto the servomotor
 double min_position_deg_base = 0;
-double max_position_deg_base = 180;
+double max_position_deg_base = 165;
 
 int32_t min_position_base = 0;
 int32_t max_position_base = 4095;
@@ -42,14 +43,14 @@ void init_base(DynamixelShield &dxl, Stream &serial) {
   //MOTOR INITIALISATION
   dxl.torqueOff(DXL_ID_base); // Disable torque (required for EEPROM writes)
   dxl.setOperatingMode(DXL_ID_base, OP_POSITION); // Configure the motor to obey POSITION commands only
-  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID_base, 100);   // Change between 5 and 200
+  dxl.writeControlTableItem(PROFILE_VELOCITY, DXL_ID_base, 30);   // Change between 5 and 200
   dxl.writeControlTableItem(MIN_POSITION_LIMIT, DXL_ID_base, 60);
   dxl.torqueOn(DXL_ID_base); //
 
   motorArmed = true;
 
   serial.println("Setting base initial position...");
-  dxl.setGoalPosition(DXL_ID_base, 205, UNIT_DEGREE);
+  dxl.setGoalPosition(DXL_ID_base, offset_position_deg_base, UNIT_DEGREE);
   serial.println("Base initialized");
 }
 
@@ -123,8 +124,8 @@ void loop_base(DynamixelShield &dxl, Stream &serial) {
     
     // move motor
     if (motorArmed) {
-      // 205 value depends on how the base was mounted onto the servomotor
-      dxl.setGoalPosition(DXL_ID_base, 205-received_pos, UNIT_DEGREE);
+      // offset_position_deg_base value depends on how the base was mounted onto the servomotor
+      dxl.setGoalPosition(DXL_ID_base, offset_position_deg_base-received_pos, UNIT_DEGREE);
       serial.print("Setting goal position to: " + String(received_pos));
       serial.println('>');
     }
@@ -133,7 +134,7 @@ void loop_base(DynamixelShield &dxl, Stream &serial) {
 
   //READ POSITION
   if (Current_pos){
-    serial.print("Current position: " + String(205-dxl.getPresentPosition(DXL_ID_base, UNIT_DEGREE)));
+    serial.print("Current position: " + String(offset_position_deg_base-dxl.getPresentPosition(DXL_ID_base, UNIT_DEGREE)));
     serial.println('>');
     Current_pos=false;
   }
